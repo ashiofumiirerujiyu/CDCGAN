@@ -3,8 +3,8 @@ import pytz
 import random
 import logging
 import torch
+import onnx
 from datetime import datetime
-from torchvision.utils import save_image
 
 
 class KSTFormatter(logging.Formatter):
@@ -47,14 +47,21 @@ def generate_output_path(seed):
     return output_path
 
 
-def save_generated_images(generator, noise_dim, save_path, epoch, y, device):
-    y = y.unsqueeze(0).to(device)
-    z = torch.randn(1, noise_dim)
+def load_and_check_onnx_model(model_path):
+    # ONNX 모델 로드
+    onnx_model = onnx.load(model_path)
     
-    with torch.no_grad():
-        fake_image = generator(z, y)
-        fake_image = fake_image.view(1, 1, 28, 28)  # Adjust shape as necessary
+    # 모델 체크
+    onnx.checker.check_model(onnx_model)
     
-    filename = os.path.join(save_path, f"epoch_{epoch}_{int(y.detach())}.jpg")
-    save_image(fake_image, filename, nrow=1, normalize=True)
+    # 모델 입력 및 출력 차원 출력
+    print("Model inputs:")
+    for input in onnx_model.graph.input:
+        input_dims = [dim.dim_value for dim in input.type.tensor_type.shape.dim]
+        print(f"{input.name}: {input_dims}")
     
+    print("Model outputs:")
+    for output in onnx_model.graph.output:
+        output_dims = [dim.dim_value for dim in output.type.tensor_type.shape.dim]
+        print(f"{output.name}: {output_dims}")
+        

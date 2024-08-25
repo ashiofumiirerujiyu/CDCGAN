@@ -1,7 +1,7 @@
 import os
 import torch
+from torchvision.utils import save_image
 from torch.utils.tensorboard import SummaryWriter
-from utils import save_generated_images
 
 
 class Trainer:
@@ -56,7 +56,7 @@ class Trainer:
 
                 for i in range(10):
                     random_label = torch.tensor(i)
-                    save_generated_images(self.generator, self.noise_dim, self.save_path, epoch + 1, random_label, self.device)
+                    self.save_generated_images(random_label, epoch + 1)
             
             self.logger.info(f"Current Best:: d_loss: {self.lowest_d_loss:.4f} g_loss: {self.lowest_g_loss:.4f}")
 
@@ -69,8 +69,6 @@ class Trainer:
             batch_size = x.size(0)
             real_labels = torch.ones(batch_size, 1).to(self.device)
             fake_labels = torch.zeros(batch_size, 1).to(self.device)
-
-            x = x.view(batch_size, -1)
 
             self.optimizer_d.zero_grad()
             real_loss = self.loss_func(self.discriminator(x, y), real_labels)
@@ -104,8 +102,7 @@ class Trainer:
                 batch_size = x.size(0)
                 real_labels = torch.ones(batch_size, 1).to(self.device)
                 fake_labels = torch.zeros(batch_size, 1).to(self.device)
-
-                x = x.view(batch_size, -1)
+                
                 real_loss = self.loss_func(self.discriminator(x, y), real_labels)
 
                 z = torch.randn(batch_size, self.noise_dim).to(self.device)
@@ -131,7 +128,6 @@ class Trainer:
                 real_labels = torch.ones(batch_size, 1).to(self.device)
                 fake_labels = torch.zeros(batch_size, 1).to(self.device)
 
-                x = x.view(batch_size, -1)
                 real_loss = self.loss_func(self.discriminator(x, y), real_labels)
 
                 z = torch.randn(batch_size, self.noise_dim).to(self.device)
@@ -146,3 +142,13 @@ class Trainer:
 
         return d_losses / len(test_loader), g_losses / len(test_loader)
     
+    def save_generated_images(self, y, epoch):
+        y = y.unsqueeze(0).to(self.device) # add batch
+        z = torch.randn(1, self.noise_dim).to(self.device)
+        
+        with torch.no_grad():
+            fake_image = self.generator(z, y)
+            fake_image = fake_image.view(1, 1, 28, 28)  # Adjust shape as necessary
+        
+        filename = os.path.join(self.save_path, f"epoch_{epoch}_{int(y.detach())}.jpg")
+        save_image(fake_image, filename, nrow=1, normalize=True)

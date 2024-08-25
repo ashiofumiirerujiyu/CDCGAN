@@ -8,7 +8,7 @@ from utils import KSTFormatter, seed_everything, generate_output_path
 from model import Generator, Discriminator
 from trainer import Trainer
 
-yaml_path = "/workspace/cGAN/config.yaml"
+yaml_path = "./config/train.yaml"
 with open(yaml_path, 'r') as file:
     config = yaml.safe_load(file)
 
@@ -36,17 +36,17 @@ logger.info(f"Using device: {device}")
 
 # dataset
 train_transform, test_transform = get_transform(logger)
-train_dataset, valid_dataset, test_dataset = get_dataset("/workspace/GSM_study/Grade2/data", config['dataloader']['train_ratio'], train_transform, test_transform, logger)
+train_dataset, valid_dataset, test_dataset = get_dataset("./data", config['dataloader']['train_ratio'], train_transform, test_transform, logger)
 train_loader, valid_loader, test_loader = get_loaders(train_dataset, valid_dataset, test_dataset, config['dataloader']['batch_size'], config['dataloader']['num_workers'], logger)
 
 # model
-generator = Generator(config['model']['noise_dim'], config['model']['label_dim'], config['model']['img_dim'])
-discriminator = Discriminator(config['model']['img_dim'], config['model']['label_dim'])
+generator = Generator(config['model']['generator']['noise_dim'], config['model']['generator']['label_dim'], config['model']['generator']['img_channels'], config['model']['generator']['feature_g'], config['model']['generator']['dropout_p'])
+discriminator = Discriminator(config['model']['discriminator']['img_channels'], config['model']['discriminator']['label_dim'], config['model']['discriminator']['feature_d'], config['model']['discriminator']['dropout_p'])
 
 # trainer
 loss_func = nn.BCELoss()
 optimizer_G = torch.optim.Adam(generator.parameters(), lr=config['train']['gen_lr'])
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=config['train']['dis_lr'])
 
-trainer = Trainer(generator, discriminator, optimizer_G, optimizer_D, loss_func, config['model']['noise_dim'], config['train']['n_epoch'], device, save_path, logger)
+trainer = Trainer(generator, discriminator, optimizer_G, optimizer_D, loss_func, config['model']['generator']['noise_dim'], config['train']['n_epoch'], device, save_path, logger)
 trainer.main(train_loader, valid_loader, test_loader)
