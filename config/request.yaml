@@ -1,4 +1,0 @@
-request:
-  model_name: "generator"
-  batch_size: 4
-  label_dim: 10

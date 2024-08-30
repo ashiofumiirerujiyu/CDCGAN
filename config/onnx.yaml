@@ -1,8 +1,0 @@
-model:
-  generator:
-    noise_dim: 100
-    label_dim: 10
-    img_channels: 1
-    feature_g: 64
-    dropout_p: 0.5
-    weight_path: "/workspace/cGAN/output/2024_08_26/025122_42/best_generator.pth"
