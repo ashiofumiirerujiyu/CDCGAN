@@ -24,5 +24,5 @@ class DCGANDiscriminator(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, img):
-        return self.net(img)
+        return self.net(img).view(-1)
     
